@@ -35,15 +35,22 @@ class MicrosoftOutlookMixin(models.AbstractModel):
 
     def _compute_is_microsoft_outlook_configured(self):
         Config = self.env['ir.config_parameter'].sudo()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
-        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
+        if self._name == 'fetchmail.server':
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(seld.id))
+            microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret' + '_' + str(seld.id))
+        else:
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
+            microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
         self.is_microsoft_outlook_configured = microsoft_outlook_client_id and microsoft_outlook_client_secret
 
     @api.depends('is_microsoft_outlook_configured')
     def _compute_outlook_uri(self):
         Config = self.env['ir.config_parameter'].sudo()
-        base_url = self.get_base_url()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
+        base_url = self.get_base_url()        
+        if self._name == 'fetchmail.server':
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(seld.id))
+        else:
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
 
         for record in self:
             if not record.id or not record.is_microsoft_outlook_configured:
@@ -119,9 +126,13 @@ class MicrosoftOutlookMixin(models.AbstractModel):
         :param values: Additional parameters that will be given to the Outlook endpoint
         """
         Config = self.env['ir.config_parameter'].sudo()
-        base_url = self.get_base_url()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
-        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
+        base_url = self.get_base_url()        
+        if self._name == 'fetchmail.server':
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(seld.id))
+            microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret' + '_' + str(seld.id))
+        else:
+            microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
+            microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
 
         response = requests.post(
             url_join(self._get_microsoft_endpoint(), 'token'),

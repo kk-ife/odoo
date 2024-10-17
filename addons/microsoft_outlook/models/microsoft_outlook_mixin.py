@@ -35,15 +35,18 @@ class MicrosoftOutlookMixin(models.AbstractModel):
 
     def _compute_is_microsoft_outlook_configured(self):
         Config = self.env['ir.config_parameter'].sudo()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
-        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
+        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(self.id)) if self._name in ['fetchmail.server', 'ir.mail_server'] else Config.get_param('microsoft_outlook_client_id')
+        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret' + '_' + str(self.id)) if self._name  in ['fetchmail.server', 'ir.mail_server'] else Config.get_param('microsoft_outlook_client_secret')
         self.is_microsoft_outlook_configured = microsoft_outlook_client_id and microsoft_outlook_client_secret
+        if self._name in ['fetchmail.server', 'ir.mail_server'] and self.server_type == 'outlook' and not self.is_microsoft_outlook_configured:
+            name = self._description            
+            raise UserError(_('You have to set systemparameters for ' + name + ' outlook oauth credentials:\n' + 'set keys:\n' + 'microsoft_outlook_client_id' + str(self.id))) + 'and\n' + 'microsoft_outlook_client_secret' + str(self.id)))
 
     @api.depends('is_microsoft_outlook_configured')
     def _compute_outlook_uri(self):
         Config = self.env['ir.config_parameter'].sudo()
         base_url = self.get_base_url()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
+        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(self.id)) if self._name  in ['fetchmail.server', 'ir.mail_server'] else Config.get_param('microsoft_outlook_client_id')
 
         for record in self:
             if not record.id or not record.is_microsoft_outlook_configured:
@@ -120,9 +123,9 @@ class MicrosoftOutlookMixin(models.AbstractModel):
         """
         Config = self.env['ir.config_parameter'].sudo()
         base_url = self.get_base_url()
-        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id')
-        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret')
-
+        microsoft_outlook_client_id = Config.get_param('microsoft_outlook_client_id' + '_' + str(self.id)) if self._name  in ['fetchmail.server', 'ir.mail_server'] else Config.get_param('microsoft_outlook_client_id')
+        microsoft_outlook_client_secret = Config.get_param('microsoft_outlook_client_secret' + '_' + str(self.id)) if self._name in ['fetchmail.server', 'ir.mail_server'] else Config.get_param('microsoft_outlook_client_secret')
+        
         response = requests.post(
             url_join(self._get_microsoft_endpoint(), 'token'),
             data={
